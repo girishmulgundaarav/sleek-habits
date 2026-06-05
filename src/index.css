@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --color-canvas-bg: #F7F9FC;
+  --color-card-bg: #FFFFFF;
+  --color-card-border: #f1f5f9;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --bg-slate-50-custom: #f8fafc;
+}
+
+.dark {
+  --color-canvas-bg: #0B0F19;
+  --color-card-bg: rgba(22, 31, 48, 0.75); /* Premium glassmorphism card frame */
+  --color-card-border: rgba(255, 255, 255, 0.05);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --bg-slate-50-custom: #162235;
+}
+
+@theme {
+  --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
+  --color-brand-blue: #0066FF;
+  --color-brand-crimson: #FF4B55;
+  --color-brand-grey: #A0AEC0;
+  
+  /* Semantic tokens that flip automatically on .dark class toggle */
+  --color-canvas-bg: var(--color-canvas-bg);
+  --color-card-bg: var(--color-card-bg);
+  --color-card-border-custom: var(--color-card-border);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
+  --color-slate-50-custom: var(--bg-slate-50-custom);
+  
+  --radius-card: 24px;
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.03);
+}
+
+body {
+  background-color: var(--color-canvas-bg);
+  color: var(--color-text-main);
+  font-family: var(--font-sans);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Custom scrollbar to match the clean light/dark UI */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
