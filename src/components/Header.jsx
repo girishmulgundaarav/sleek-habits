@@ -168,6 +168,16 @@ export const Header = ({ currentView, setCurrentView }) => {
             >
               Analysis
             </button>
+            <button 
+              onClick={() => handleViewChange('coach')}
+              className={`flex-1 sm:flex-none px-6 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+                currentView === 'coach' 
+                  ? 'bg-card-bg text-brand-blue shadow-sm dark:shadow-none' 
+                  : 'text-text-muted hover:text-text-main'
+              }`}
+            >
+              AI Coach
+            </button>
           </div>
 
           {/* User Profile Info */}

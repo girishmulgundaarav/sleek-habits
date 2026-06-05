@@ -6,11 +6,12 @@ import Trackers from './components/Trackers';
 import Activities from './components/Activities';
 import GoalPlanner from './components/GoalPlanner';
 import AnalysisPage from './components/AnalysisPage';
+import CoachPage from './components/CoachPage';
 import LoginScreen from './components/LoginScreen';
 
 function MainApp() {
   const { user, loading } = useContext(AppContext);
-  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'goals', or 'analysis'
+  const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'goals', 'analysis', or 'coach'
 
   if (loading) {
     return (
@@ -54,6 +55,9 @@ function MainApp() {
           ) : currentView === 'goals' ? (
             /* Goal Planner view */
             <GoalPlanner />
+          ) : currentView === 'coach' ? (
+            /* AI Coach view */
+            <CoachPage />
           ) : (
             /* Analysis view with Recharts */
             <AnalysisPage />
