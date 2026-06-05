@@ -18,7 +18,9 @@ export const Header = ({ currentView, setCurrentView }) => {
     user,
     loading,
     signInWithGoogle,
-    handleSignOut
+    handleSignOut,
+    xpDetails,
+    badges
   } = useContext(AppContext);
 
   // Generate list of the past 7 days for the calendar strip
@@ -116,6 +118,71 @@ export const Header = ({ currentView, setCurrentView }) => {
       } catch (e) {
         void e;
       }
+    }
+  };
+
+  const getBadgeGlow = (type) => {
+    switch (type) {
+      case 'monk': return '0 0 12px rgba(16, 185, 129, 0.25)';
+      case 'wizard': return '0 0 12px rgba(139, 92, 246, 0.25)';
+      case 'king': return '0 0 12px rgba(245, 158, 11, 0.25)';
+      case 'sleep': return '0 0 12px rgba(59, 130, 246, 0.25)';
+      case 'target': return '0 0 12px rgba(244, 63, 94, 0.25)';
+      default: return 'none';
+    }
+  };
+
+  const getBadgeIcon = (type, isUnlocked) => {
+    switch (type) {
+      case 'monk':
+        return (
+          <svg className={`w-6 h-6 ${isUnlocked ? 'text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3c-1.2 2.5-3.6 4-6 4 2.4 0 4.8 1.5 6 4 1.2-2.5 3.6-4 6-4-2.4 0-4.8-1.5-6-4z" />
+            <path d="M12 11c-1.8 2-5.4 3-8 3 2.6 0 6.2-1 8-3 1.8 2 5.4 3 8 3-2.6 0-6.2-1-8-3z" />
+            <path d="M12 11v10" />
+            <path d="M8 21h8" />
+          </svg>
+        );
+      case 'wizard':
+        return (
+          <svg className={`w-6 h-6 ${isUnlocked ? 'text-violet-500 drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m12 3-1.912 5.813a2 2 0 0 0-1.275 1.275L3 12l5.813 1.912a2 2 0 0 0 1.275 1.275L12 21l1.912-5.813a2 2 0 0 0 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 0-1.275-1.275L12 3Z" />
+            <path d="m5 3 2 2" />
+            <path d="m19 3-2 2" />
+            <path d="m5 21 2-2" />
+            <path d="m19 21-2-2" />
+          </svg>
+        );
+      case 'king':
+        return (
+          <svg className={`w-6 h-6 ${isUnlocked ? 'text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
+            <path d="M3 20h18" />
+            <circle cx="12" cy="4" r="1" fill="currentColor" />
+            <circle cx="5" cy="4" r="1" fill="currentColor" />
+            <circle cx="19" cy="4" r="1" fill="currentColor" />
+          </svg>
+        );
+      case 'sleep':
+        return (
+          <svg className={`w-6 h-6 ${isUnlocked ? 'text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+            <path d="M19 3v4" />
+            <path d="M17 5h4" />
+          </svg>
+        );
+      case 'target':
+        return (
+          <svg className={`w-6 h-6 ${isUnlocked ? 'text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="12" r="6" />
+            <circle cx="12" cy="12" r="2" />
+            <path d="m19 5-7 7" />
+            <path d="M14 5h5v5" />
+          </svg>
+        );
+      default:
+        return null;
     }
   };
 
@@ -247,6 +314,103 @@ export const Header = ({ currentView, setCurrentView }) => {
           </div>
         </div>
       </div>
+
+      {/* Gamified Achievements & Leveling Section */}
+      {user && xpDetails && (
+        <div className="bg-card-bg/60 dark:bg-card-bg/40 backdrop-blur-md rounded-card shadow-card border border-card-border-custom p-4 flex flex-col md:flex-row items-center gap-6 justify-between select-none">
+          
+          {/* Level Progress Indicator */}
+          <div className="flex items-center gap-4 w-full md:w-auto shrink-0 border-b md:border-b-0 md:border-r border-card-border-custom pb-4 md:pb-0 md:pr-6 justify-between md:justify-start">
+            <div className="relative flex items-center justify-center w-14 h-14 bg-gradient-to-tr from-brand-blue to-violet-500 rounded-full shadow-[0_0_15px_rgba(0,102,255,0.4)] border-2 border-white/20 shrink-0">
+              <div className="flex flex-col items-center leading-none text-white">
+                <span className="text-[8px] font-black uppercase tracking-wider">Lvl</span>
+                <span className="text-xl font-extrabold">{xpDetails.level}</span>
+              </div>
+              {/* Outer pulsing ring */}
+              <div className="absolute inset-0 rounded-full border border-brand-blue/30 animate-ping [animation-duration:3s]" />
+            </div>
+
+            <div className="flex flex-col gap-1.5 flex-1 max-w-[200px] text-left ml-2">
+              <div className="flex justify-between items-baseline">
+                <span className="text-[10px] text-brand-grey font-bold uppercase tracking-wider">XP Progress</span>
+                <span className="text-[10px] font-extrabold text-brand-blue">{xpDetails.xpInLevel} / {xpDetails.xpNeeded} XP</span>
+              </div>
+              {/* Custom Level Progress Bar */}
+              <div className="w-full h-2 bg-slate-100 dark:bg-slate-800/80 rounded-full overflow-hidden border border-card-border-custom">
+                <div 
+                  className="h-full bg-gradient-to-r from-brand-blue to-violet-500 rounded-full transition-all duration-500 ease-out" 
+                  style={{ width: `${xpDetails.progressPercentage}%` }}
+                />
+              </div>
+              <span className="text-[9px] text-text-muted font-semibold leading-none">
+                Total Earned: {xpDetails.totalXP} XP
+              </span>
+            </div>
+          </div>
+
+          {/* Badges Carousel Row */}
+          <div className="relative flex-1 w-full overflow-hidden flex items-center justify-end">
+            <div className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth py-1 px-2 w-full justify-start md:justify-end">
+              {badges.map((badge) => {
+                const Icon = getBadgeIcon(badge.iconType, badge.isUnlocked);
+                return (
+                  <div 
+                    key={badge.id} 
+                    className="group relative flex flex-col items-center shrink-0 cursor-help"
+                  >
+                    {/* Glowing circular container */}
+                    <div 
+                      className={`w-12 h-12 rounded-full flex items-center justify-center border transition-all duration-300 ${
+                        badge.isUnlocked
+                          ? 'bg-gradient-to-b from-card-bg to-slate-50-custom shadow-md border-slate-200 dark:border-slate-700 hover:scale-110 active:scale-95'
+                          : 'bg-slate-100/50 dark:bg-slate-800/30 border-dashed border-slate-300 dark:border-slate-800 opacity-60 filter grayscale'
+                      }`}
+                      style={badge.isUnlocked ? {
+                        boxShadow: getBadgeGlow(badge.iconType)
+                      } : {}}
+                    >
+                      {Icon}
+                    </div>
+
+                    {/* Miniature lock badge if locked */}
+                    {!badge.isUnlocked && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-full flex items-center justify-center shadow-sm">
+                        <svg className="w-2.5 h-2.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                      </div>
+                    )}
+
+                    {/* Unlocked check badge if unlocked */}
+                    {badge.isUnlocked && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border border-white dark:border-slate-900 rounded-full flex items-center justify-center shadow-sm">
+                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+
+                    {/* Floating Glassmorphic Tooltip */}
+                    <div className="absolute bottom-14 left-1/2 -translate-x-1/2 w-48 p-3 rounded-2xl bg-card-bg/95 dark:bg-slate-900/95 border border-card-border-custom shadow-xl backdrop-blur-md opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50 text-center flex flex-col gap-1">
+                      <span className={`text-[10px] font-black uppercase tracking-wider ${badge.isUnlocked ? 'text-brand-blue' : 'text-text-muted'}`}>
+                        {badge.isUnlocked ? '🔓 Unlocked' : '🔒 Locked'}
+                      </span>
+                      <h5 className="text-xs font-extrabold text-text-main leading-tight">{badge.name}</h5>
+                      <p className="text-[9px] text-text-muted leading-relaxed mt-0.5">{badge.description}</p>
+                      <div className="mt-1.5 pt-1.5 border-t border-card-border-custom flex justify-between items-center text-[9px] font-bold text-text-main">
+                        <span>Progress:</span>
+                        <span className={badge.isUnlocked ? 'text-emerald-500' : 'text-brand-blue'}>{badge.progressText}</span>
+                      </div>
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+        </div>
+      )}
 
       {/* Date Navigator Grid & Completion Summary Card */}
       {currentView === 'dashboard' && (

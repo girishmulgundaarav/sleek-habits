@@ -1195,12 +1195,156 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Dynamic XP and Badges calculation
+  const getXPAndBadges = () => {
+    // 1. Habits XP (15 XP per completion)
+    let habitCompletions = 0;
+    habits.forEach(h => {
+      Object.keys(h.history || {}).forEach(date => {
+        if (isHabitCompleted(h, date)) {
+          habitCompletions++;
+        }
+      });
+    });
+    const habitXP = habitCompletions * 15;
+
+    // 2. Focus XP (1 XP per minute logged)
+    let totalFocusMins = 0;
+    Object.values(focus || {}).forEach(m => {
+      totalFocusMins += Number(m) || 0;
+    });
+    const focusXP = totalFocusMins * 1;
+
+    // 3. Sleep XP (5 XP per sleep hour logged)
+    let totalSleepHours = 0;
+    Object.values(sleep || {}).forEach(h => {
+      totalSleepHours += Number(h) || 0;
+    });
+    const sleepXP = Math.round(totalSleepHours * 5);
+
+    // 4. Goals and Subtasks XP (100 XP per completed goal, 20 XP per completed subtask)
+    let completedSubtasks = 0;
+    let completedGoals = 0;
+    goals.forEach(g => {
+      const totalSub = g.subtasks.length;
+      const completedSub = g.subtasks.filter(s => s.completed).length;
+      completedSubtasks += completedSub;
+      if (totalSub > 0 && completedSub === totalSub) {
+        completedGoals++;
+      }
+    });
+    const goalXP = (completedSubtasks * 20) + (completedGoals * 100);
+
+    const totalXP = habitXP + focusXP + sleepXP + goalXP;
+    
+    // Level calculations (300 XP per level)
+    const level = Math.floor(totalXP / 300) + 1;
+    const xpInLevel = totalXP % 300;
+    const xpNeeded = 300;
+    const progressPercentage = Math.round((xpInLevel / xpNeeded) * 100);
+
+    const xpDetails = {
+      totalXP,
+      level,
+      xpInLevel,
+      xpNeeded,
+      progressPercentage
+    };
+
+    // 5. Badges details & unlock checks
+    
+    // Badge 1: Mindfulness Monk (7-day completion streak on a mindfulness habit)
+    const mindfulnessHabits = habits.filter(h => h.category === 'Mindfulness');
+    const maxMindfulnessStreak = mindfulnessHabits.reduce((max, h) => {
+      const streak = calculateStreak(h);
+      return streak > max ? streak : max;
+    }, 0);
+    const mindfulnessUnlocked = maxMindfulnessStreak >= 7;
+
+    // Badge 2: Deep Flow Wizard (120+ focus minutes in a single day)
+    const maxFocusDay = Math.max(...Object.values(focus || {}).map(Number), 0);
+    const flowWizardUnlocked = maxFocusDay >= 120;
+
+    // Badge 3: Consistent King (Completed all scheduled habits on at least 3 separate days)
+    const allLoggedDates = new Set();
+    habits.forEach(h => {
+      Object.keys(h.history || {}).forEach(date => allLoggedDates.add(date));
+    });
+    let allScheduledCompletedDays = 0;
+    allLoggedDates.forEach(date => {
+      const scheduled = habits.filter(h => isScheduledForDate(h, date) && !h.isHidden);
+      if (scheduled.length > 0) {
+        const allCompleted = scheduled.every(h => isHabitCompleted(h, date));
+        if (allCompleted) {
+          allScheduledCompletedDays++;
+        }
+      }
+    });
+    const consistentKingUnlocked = allScheduledCompletedDays >= 3;
+
+    // Badge 4: Healthy Sleeper (Logged 8+ sleep hours on 5+ days)
+    const sleep8PlusDays = Object.values(sleep || {}).filter(hrs => Number(hrs) >= 8).length;
+    const healthySleeperUnlocked = sleep8PlusDays >= 5;
+
+    // Badge 5: Goal Crusher (Completed at least 1 goal)
+    const goalCrusherUnlocked = completedGoals >= 1;
+
+    const badges = [
+      {
+        id: 'mindfulness_monk',
+        name: 'Mindfulness Monk',
+        description: 'Achieve a 7-day completion streak on any Mindfulness habit.',
+        isUnlocked: mindfulnessUnlocked,
+        progressText: `${maxMindfulnessStreak}/7 days`,
+        iconType: 'monk'
+      },
+      {
+        id: 'flow_wizard',
+        name: 'Deep Flow Wizard',
+        description: 'Complete 120+ minutes of deep focus in a single day.',
+        isUnlocked: flowWizardUnlocked,
+        progressText: `${maxFocusDay}/120 mins`,
+        iconType: 'wizard'
+      },
+      {
+        id: 'consistent_king',
+        name: 'Consistent King',
+        description: 'Check off all scheduled habits on 3 separate days.',
+        isUnlocked: consistentKingUnlocked,
+        progressText: `${allScheduledCompletedDays}/3 days`,
+        iconType: 'king'
+      },
+      {
+        id: 'healthy_sleeper',
+        name: 'Healthy Sleeper',
+        description: 'Log 8+ hours of deep, restful sleep on 5 different days.',
+        isUnlocked: healthySleeperUnlocked,
+        progressText: `${sleep8PlusDays}/5 days`,
+        iconType: 'sleep'
+      },
+      {
+        id: 'goal_crusher',
+        name: 'Goal Crusher',
+        description: 'Successfully complete a planner goal and all its subtasks.',
+        isUnlocked: goalCrusherUnlocked,
+        progressText: `${completedGoals}/1 goal`,
+        iconType: 'target'
+      }
+    ];
+
+    return { xpDetails, badges };
+  };
+
+  const { xpDetails, badges } = getXPAndBadges();
+
   return (
     <AppContext.Provider value={{
       selectedDate,
       setSelectedDate,
       todayStr,
       habits,
+      xpDetails,
+      badges,
       toggleHabit,
       changeHabitProgress,
       addNewHabit,
