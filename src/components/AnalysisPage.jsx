@@ -28,10 +28,44 @@ const CustomTooltip = ({ active, payload, label, unit }) => {
   return null;
 };
 
+const CorrelationTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-card-bg backdrop-blur-md p-3 rounded-xl border border-card-border-custom shadow-md text-xs font-semibold text-text-main">
+        <p className="text-text-muted font-bold mb-1.5 uppercase tracking-wider text-[10px]">{label}</p>
+        {payload.map((pld, index) => {
+          let valueDisplay;
+          let unit = '';
+          
+          if (pld.name.endsWith('Checks') || pld.name.includes('Habit:')) {
+            valueDisplay = pld.value === 1 ? '✅ Completed' : '❌ Incomplete';
+          } else {
+            if (pld.name.includes('Sleep')) unit = ' hrs';
+            else if (pld.name.includes('Focus')) unit = ' mins';
+            else if (pld.name.includes('Mood')) unit = ' / 5';
+            else if (pld.name.includes('Completion Rate')) unit = '%';
+            valueDisplay = `${pld.value}${unit}`;
+          }
+
+          return (
+            <div key={index} className="flex items-center gap-2 mt-1">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: pld.color || pld.stroke }}></span>
+              <span className="text-text-muted">{pld.name}: <strong className="text-text-main font-extrabold">{valueDisplay}</strong></span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+  return null;
+};
+
 export const AnalysisPage = () => {
   const { habits, isHabitCompleted, focus, sleep, moodEnergy, goals, getPastDateString, theme, todayStr } = useContext(AppContext);
   const [timeRange, setTimeRange] = useState('7days');
   const rangeSize = timeRange === '7days' ? 7 : 30;
+  const [leftMetric, setLeftMetric] = useState('sleep');
+  const [rightMetric, setRightMetric] = useState('completionRate');
 
   const getLocalDateString = (date) => {
     const year = date.getFullYear();
@@ -692,6 +726,61 @@ export const AnalysisPage = () => {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  // Consolidation for dynamic correlation chart
+  const correlationData = daysList.map(dateStr => {
+    const total = habits.length;
+    const completed = habits.filter(h => isHabitCompleted(h, dateStr)).length;
+    const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+    
+    const row = {
+      date: formatDateLabel(dateStr),
+      sleep: sleep[dateStr] || 0,
+      focus: focus[dateStr] || 0,
+      mood: moodEnergy[dateStr] || 0,
+      completionRate: rate
+    };
+
+    // Store each habit completion as binary value (1/0)
+    habits.forEach(h => {
+      row[`habit_${h.id}`] = isHabitCompleted(h, dateStr) ? 1 : 0;
+    });
+
+    return row;
+  });
+
+  // Left axis options mapping
+  const leftConfigs = {
+    sleep: { name: 'Sleep Duration', key: 'sleep', color: '#FF4B55', unit: ' hrs', domain: [0, 10] },
+    focus: { name: 'Focus Minutes', key: 'focus', color: '#8B5CF6', unit: ' mins', domain: [0, 180] },
+    mood: { name: 'Mood & Energy', key: 'mood', color: '#F59E0B', unit: ' / 5', domain: [1, 5] }
+  };
+
+  const leftConfig = leftConfigs[leftMetric] || leftConfigs.sleep;
+
+  let rightConfig;
+  if (rightMetric === 'completionRate') {
+    rightConfig = { name: 'Habit Completion Rate', key: 'completionRate', color: '#0066FF', unit: '%', domain: [0, 100], isHabit: false };
+  } else if (rightMetric === 'sleep') {
+    rightConfig = { name: 'Sleep Duration', key: 'sleep', color: '#FF4B55', unit: ' hrs', domain: [0, 10], isHabit: false };
+  } else if (rightMetric === 'focus') {
+    rightConfig = { name: 'Focus Minutes', key: 'focus', color: '#8B5CF6', unit: ' mins', domain: [0, 180], isHabit: false };
+  } else if (rightMetric === 'mood') {
+    rightConfig = { name: 'Mood & Energy', key: 'mood', color: '#F59E0B', unit: ' / 5', domain: [1, 5], isHabit: false };
+  } else if (rightMetric.startsWith('habit_')) {
+    const habitId = rightMetric.replace('habit_', '');
+    const foundHabit = habits.find(h => h.id === habitId);
+    rightConfig = {
+      name: foundHabit ? `Habit: ${foundHabit.name}` : 'Habit Completion',
+      key: rightMetric,
+      color: '#10B981', // green for checks
+      unit: '',
+      domain: [0, 1],
+      isHabit: true
+    };
+  } else {
+    rightConfig = { name: 'Habit Completion Rate', key: 'completionRate', color: '#0066FF', unit: '%', domain: [0, 100], isHabit: false };
+  }
+
   // 1. DATA PREPARATION FOR CHARTS
 
   // Habits completion data
@@ -1119,6 +1208,145 @@ export const AnalysisPage = () => {
             </div>
           );
         })}
+      </div>
+
+      {/* INTERACTIVE CROSS-METRIC CORRELATION CHART */}
+      <div className="bg-card-bg rounded-card shadow-card border border-card-border-custom p-6 flex flex-col gap-6 w-full">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col">
+            <span className="text-[11px] text-brand-grey font-bold uppercase tracking-wider">
+              Interactive Correlation Explorer
+            </span>
+            <span className="text-base font-extrabold text-text-main tracking-tight">
+              Cross-Metric Behavior Plotter
+            </span>
+            <p className="text-xs text-text-muted mt-1 leading-relaxed max-w-lg">
+              Overlay any tracking behavior with habit completions or other parameters to discover correlations.
+            </p>
+          </div>
+        </div>
+
+        {/* Selection Selectors */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50-custom dark:bg-slate-900/40 p-4 rounded-2xl border border-card-border-custom">
+          {/* Left Y-Axis Selector */}
+          <div className="flex flex-col gap-2">
+            <span className="text-[10px] text-brand-grey font-bold uppercase tracking-wider text-left">Left Y-Axis (Primary Metric)</span>
+            <div className="flex flex-wrap gap-2 justify-start">
+              <button
+                onClick={() => setLeftMetric('sleep')}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                  leftMetric === 'sleep'
+                    ? 'bg-red-500/10 dark:bg-red-500/20 text-red-500 border-red-500/30'
+                    : 'bg-card-bg text-text-muted border-card-border-custom hover:text-text-main dark:hover:bg-slate-800'
+                }`}
+              >
+                <Moon className="w-3.5 h-3.5" /> Sleep Hours
+              </button>
+              <button
+                onClick={() => setLeftMetric('focus')}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                  leftMetric === 'focus'
+                    ? 'bg-violet-500/10 dark:bg-violet-500/20 text-violet-500 border-violet-500/30'
+                    : 'bg-card-bg text-text-muted border-card-border-custom hover:text-text-main dark:hover:bg-slate-800'
+                }`}
+              >
+                <Brain className="w-3.5 h-3.5" /> Focus Minutes
+              </button>
+              <button
+                onClick={() => setLeftMetric('mood')}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+                  leftMetric === 'mood'
+                    ? 'bg-amber-500/10 dark:bg-amber-500/20 text-amber-500 border-amber-500/30'
+                    : 'bg-card-bg text-text-muted border-card-border-custom hover:text-text-main dark:hover:bg-slate-800'
+                }`}
+              >
+                <Smile className="w-3.5 h-3.5" /> Mood & Energy
+              </button>
+            </div>
+          </div>
+
+          {/* Right Y-Axis Selector */}
+          <div className="flex flex-col gap-2">
+            <span className="text-[10px] text-brand-grey font-bold uppercase tracking-wider text-left">Right Y-Axis (Overlay Data)</span>
+            <div className="flex gap-2 w-full">
+              <select
+                value={rightMetric}
+                onChange={(e) => setRightMetric(e.target.value)}
+                className="w-full px-4 py-2.5 border border-card-border-custom bg-card-bg rounded-xl text-xs font-bold text-text-main outline-none dark:bg-slate-950"
+              >
+                <optgroup label="General Metrics">
+                  <option value="completionRate">📊 Habit Completion Rate (%)</option>
+                  <option value="sleep">🌙 Sleep Duration (hrs)</option>
+                  <option value="focus">⚡ Focus Duration (mins)</option>
+                  <option value="mood">☀️ Mood & Energy (1-5)</option>
+                </optgroup>
+                <optgroup label="Individual Habit Logs">
+                  {habits.map(h => (
+                    <option key={h.id} value={`habit_${h.id}`}>
+                      🎯 {h.name} Checks
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Recharts Area */}
+        <div className="h-80 w-full text-xs mt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={correlationData} margin={{ top: 15, right: 5, left: -25, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridStroke} />
+              <XAxis dataKey="date" stroke={axisStroke} fontSize={10} tickLine={false} />
+              
+              {/* Left Y-Axis */}
+              <YAxis 
+                yAxisId="left"
+                stroke={leftConfig.color}
+                fontSize={10}
+                tickLine={false}
+                domain={leftConfig.domain}
+                label={{ value: leftConfig.name, angle: -90, position: 'insideLeft', fill: leftConfig.color, fontSize: 10, fontWeight: 'bold', offset: 10 }}
+              />
+              
+              {/* Right Y-Axis */}
+              <YAxis 
+                yAxisId="right"
+                orientation="right"
+                stroke={rightConfig.color}
+                fontSize={10}
+                tickLine={false}
+                domain={rightConfig.domain}
+                tickFormatter={rightConfig.isHabit ? (val) => val === 1 ? 'Done' : 'Incomplete' : undefined}
+                label={{ value: rightConfig.name, angle: 90, position: 'insideRight', fill: rightConfig.color, fontSize: 10, fontWeight: 'bold', offset: 10 }}
+              />
+              
+              <Tooltip content={<CorrelationTooltip />} />
+              
+              <Line 
+                yAxisId="left"
+                type="monotone"
+                dataKey={leftConfig.key}
+                stroke={leftConfig.color}
+                strokeWidth={2.5}
+                name={leftConfig.name}
+                dot={{ r: 3, strokeWidth: 1.5 }}
+                activeDot={{ r: 5 }}
+              />
+              
+              <Line 
+                yAxisId="right"
+                type={rightConfig.isHabit ? "stepAfter" : "monotone"}
+                dataKey={rightConfig.key}
+                stroke={rightConfig.color}
+                strokeWidth={2.5}
+                name={rightConfig.name}
+                dot={{ r: 3, strokeWidth: 1.5 }}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* 4. CHARTS GRID */}
