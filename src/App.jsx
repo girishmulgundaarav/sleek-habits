@@ -8,6 +8,7 @@ import GoalPlanner from './components/GoalPlanner';
 import AnalysisPage from './components/AnalysisPage';
 import CoachPage from './components/CoachPage';
 import LoginScreen from './components/LoginScreen';
+import FloatingCoach from './components/FloatingCoach';
 
 function MainApp() {
   const { user, loading } = useContext(AppContext);
@@ -68,6 +69,8 @@ function MainApp() {
         <footer className="text-center py-6 border-t border-card-border-custom mt-8 text-[11px] font-bold text-text-muted uppercase tracking-wider">
           © 2026 SleekHabits • Personal Progress System
         </footer>
+
+        {currentView === 'dashboard' && <FloatingCoach />}
 
       </div>
     </div>

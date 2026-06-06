@@ -1,6 +1,6 @@
-import { useContext, useState, useEffect, useCallback } from 'react';
+import { useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Brain, Moon, Smile, Frown, Meh, Zap, Sparkles, Plus, Minus, Play, Pause, RotateCcw } from 'lucide-react';
+import { Brain, Moon, Smile, Frown, Meh, Zap, Sparkles, Plus, Minus, Play, Pause, RotateCcw, Maximize2, Minimize2, Volume2 } from 'lucide-react';
 
 export const Trackers = () => {
   const { 
@@ -13,12 +13,20 @@ export const Trackers = () => {
     updateMoodEnergy,
     getPastDateString,
     playClickSound,
-    isSoundEnabled
+    isSoundEnabled,
+    theme
   } = useContext(AppContext);
 
   // States for edit overlays
   const [editingSleepDate, setEditingSleepDate] = useState(null);
   const [sleepInput, setSleepInput] = useState('');
+
+  // 1.1 IMMERSIVE DEEP FOCUS & AMBIENT SYNTH STATES
+  const [isDeepFocusActive, setIsDeepFocusActive] = useState(false);
+  const [activeSound, setActiveSound] = useState('none'); // 'none', 'rain', 'waves', 'ambient'
+  
+  const audioCtxRef = useRef(null);
+  const synthNodesRef = useRef(null);
 
   // Today's values
   const todayFocus = focus[selectedDate] || 0;
@@ -172,6 +180,220 @@ export const Trackers = () => {
     const secs = seconds % 60;
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
+
+  // Canvas wave animation effect
+  useEffect(() => {
+    if (!isDeepFocusActive) return;
+    const canvas = document.getElementById('wave-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationId;
+    let offset = 0;
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const percent = timeLeft / timerDuration;
+      const fillHeight = canvas.height * (1 - percent); // Height from top
+      
+      // Draw wave 1 (indigo background wave)
+      ctx.fillStyle = theme === 'dark' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(139, 92, 246, 0.1)';
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+      for (let x = 0; x <= canvas.width; x++) {
+        const y = fillHeight + Math.sin(x * 0.015 + offset) * 8;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.closePath();
+      ctx.fill();
+
+      // Draw wave 2 (violet foreground wave)
+      ctx.fillStyle = theme === 'dark' ? 'rgba(99, 102, 241, 0.25)' : 'rgba(99, 102, 241, 0.18)';
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+      for (let x = 0; x <= canvas.width; x++) {
+        const y = fillHeight + Math.cos(x * 0.02 + offset * 1.3) * 6;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.closePath();
+      ctx.fill();
+
+      offset += 0.03;
+      animationId = requestAnimationFrame(render);
+    };
+
+    render();
+    return () => cancelAnimationFrame(animationId);
+  }, [isDeepFocusActive, timeLeft, timerDuration, theme]);
+
+  // Ambient Sound Controller Effect using Web Audio API synthesis
+  useEffect(() => {
+    const startAudio = async () => {
+      stopAudio();
+
+      if (!isRunning || activeSound === 'none' || typeof window === 'undefined') return;
+
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        
+        if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+          audioCtxRef.current = new AudioContextClass();
+        }
+        
+        const ctx = audioCtxRef.current;
+        if (ctx.state === 'suspended') {
+          await ctx.resume();
+        }
+
+        // Setup master gain node
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.3, ctx.currentTime);
+        masterGain.connect(ctx.destination);
+
+        const nodes = {
+          sources: [],
+          gains: [],
+          lfos: []
+        };
+
+        if (activeSound === 'rain') {
+          // Brownian Noise (Rain)
+          const bufferSize = 2 * ctx.sampleRate;
+          const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const output = noiseBuffer.getChannelData(0);
+          let lastOut = 0.0;
+          for (let i = 0; i < bufferSize; i++) {
+            const white = Math.random() * 2 - 1;
+            output[i] = (lastOut + (0.02 * white)) / 1.02;
+            lastOut = output[i];
+            output[i] *= 3.5;
+          }
+          
+          const noise = ctx.createBufferSource();
+          noise.buffer = noiseBuffer;
+          noise.loop = true;
+          
+          const lp = ctx.createBiquadFilter();
+          lp.type = 'lowpass';
+          lp.frequency.setValueAtTime(800, ctx.currentTime);
+          
+          noise.connect(lp);
+          lp.connect(masterGain);
+          noise.start();
+          
+          nodes.sources.push(noise);
+        } 
+        else if (activeSound === 'waves') {
+          // Ocean Waves (Modulated Brown Noise)
+          const bufferSize = 2 * ctx.sampleRate;
+          const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const output = noiseBuffer.getChannelData(0);
+          let lastOut = 0.0;
+          for (let i = 0; i < bufferSize; i++) {
+            const white = Math.random() * 2 - 1;
+            output[i] = (lastOut + (0.02 * white)) / 1.02;
+            lastOut = output[i];
+            output[i] *= 3.5;
+          }
+          
+          const noise = ctx.createBufferSource();
+          noise.buffer = noiseBuffer;
+          noise.loop = true;
+          
+          const lp = ctx.createBiquadFilter();
+          lp.type = 'lowpass';
+          lp.frequency.setValueAtTime(500, ctx.currentTime);
+          
+          const waveGain = ctx.createGain();
+          waveGain.gain.setValueAtTime(0.1, ctx.currentTime);
+          
+          const lfo = ctx.createOscillator();
+          lfo.type = 'sine';
+          lfo.frequency.setValueAtTime(0.08, ctx.currentTime);
+          
+          const lfoGain = ctx.createGain();
+          lfoGain.gain.setValueAtTime(0.3, ctx.currentTime);
+          
+          lfo.connect(lfoGain);
+          lfoGain.connect(waveGain.gain);
+          
+          noise.connect(lp);
+          lp.connect(waveGain);
+          waveGain.connect(masterGain);
+          
+          noise.start();
+          lfo.start();
+          
+          nodes.sources.push(noise);
+          nodes.lfos.push(lfo);
+        } 
+        else if (activeSound === 'ambient') {
+          // Deep Space Drone / Ambient Chords
+          const freqs = [110, 164.81, 220, 246.94, 261.63]; // A2, E3, A3, B3, C4
+          
+          const lp = ctx.createBiquadFilter();
+          lp.type = 'lowpass';
+          lp.frequency.setValueAtTime(280, ctx.currentTime);
+          lp.Q.setValueAtTime(2.0, ctx.currentTime);
+          
+          const lfo = ctx.createOscillator();
+          lfo.type = 'sine';
+          lfo.frequency.setValueAtTime(0.06, ctx.currentTime);
+          
+          const lfoGain = ctx.createGain();
+          lfoGain.gain.setValueAtTime(140, ctx.currentTime);
+          
+          lfo.connect(lfoGain);
+          lfoGain.connect(lp.frequency);
+          
+          freqs.forEach((freq) => {
+            const osc = ctx.createOscillator();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq + (Math.random() - 0.5), ctx.currentTime);
+            
+            const oscGain = ctx.createGain();
+            oscGain.gain.setValueAtTime(0.12, ctx.currentTime);
+            
+            osc.connect(oscGain);
+            oscGain.connect(lp);
+            osc.start();
+            nodes.sources.push(osc);
+          });
+          
+          lfo.start();
+          nodes.lfos.push(lfo);
+          
+          lp.connect(masterGain);
+        }
+
+        synthNodesRef.current = nodes;
+      } catch (err) {
+        console.error("Error starting ambient synthesizer:", err);
+      }
+    };
+
+    const stopAudio = () => {
+      if (synthNodesRef.current) {
+        const { sources, lfos } = synthNodesRef.current;
+        sources.forEach(src => {
+          try { src.stop(); } catch (e) { void e; }
+          try { src.disconnect(); } catch (e) { void e; }
+        });
+        lfos.forEach(lfo => {
+          try { lfo.stop(); } catch (e) { void e; }
+          try { lfo.disconnect(); } catch (e) { void e; }
+        });
+        synthNodesRef.current = null;
+      }
+    };
+
+    startAudio();
+
+    return () => stopAudio();
+  }, [isRunning, activeSound]);
 
   const todaySleep = sleep[selectedDate] || 0;
   
@@ -408,6 +630,17 @@ export const Trackers = () => {
                 className="w-8 h-8 bg-slate-50-custom hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-text-muted hover:text-text-main rounded-full flex items-center justify-center cursor-pointer transition-all border border-card-border-custom active:scale-90"
               >
                 <RotateCcw className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => {
+                  playClickSound();
+                  setIsDeepFocusActive(true);
+                }}
+                title="Enter Deep Focus"
+                className="w-8 h-8 bg-slate-50-custom hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-text-muted hover:text-violet-500 dark:hover:text-violet-400 rounded-full flex items-center justify-center cursor-pointer transition-all border border-card-border-custom active:scale-90"
+              >
+                <Maximize2 className="w-4 h-4" />
               </button>
             </div>
 
@@ -653,6 +886,129 @@ export const Trackers = () => {
         </div>
 
       </div>
+
+      {/* Deep Focus Immersive Overlay */}
+      {isDeepFocusActive && (
+        <div className="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-3xl flex flex-col items-center justify-between p-6 sm:p-12 text-white select-none transition-all duration-500 ease-out select-none">
+          {/* Background Ambient Glows */}
+          <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-violet-650/10 blur-[130px] pointer-events-none" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-650/10 blur-[130px] pointer-events-none" />
+
+          {/* Top Header Row (Close Button / Exit) */}
+          <div className="w-full flex justify-between items-center z-10">
+            <div className="flex flex-col">
+              <span className="text-[10px] text-brand-grey font-black uppercase tracking-widest">Immersive Mode</span>
+              <span className="text-sm font-extrabold text-slate-200">Deep Focus Flow</span>
+            </div>
+            <button 
+              onClick={() => {
+                playClickSound();
+                setIsDeepFocusActive(false);
+              }}
+              className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer active:scale-90"
+              title="Exit Immersive Mode"
+            >
+              <Minimize2 className="w-5 h-5 text-slate-300 hover:text-white" />
+            </button>
+          </div>
+
+          {/* Main Visual: Circular Wave Timer */}
+          <div className="flex flex-col items-center justify-center gap-6 z-10 my-auto">
+            {/* The circular water container */}
+            <div className="relative w-64 h-64 sm:w-72 sm:h-72 rounded-full border-4 border-white/10 flex items-center justify-center overflow-hidden shadow-[0_0_50px_rgba(139,92,246,0.15)] bg-slate-900/40 backdrop-blur-lg">
+              {/* Wave Canvas */}
+              <canvas 
+                id="wave-canvas" 
+                width="288" 
+                height="288" 
+                className="absolute inset-0 w-full h-full"
+              />
+              
+              {/* Central Time Label */}
+              <div className="absolute flex flex-col items-center z-20">
+                <span className="text-5xl sm:text-6xl font-black tracking-tight text-white font-mono drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
+                  {formatTimer(timeLeft)}
+                </span>
+                <span className="text-[10px] sm:text-xs text-white/60 font-black uppercase tracking-widest mt-1.5 drop-shadow-[0_1px_5px_rgba(0,0,0,0.5)]">
+                  {isRunning ? 'Flow State Active' : 'Session Paused'}
+                </span>
+              </div>
+            </div>
+
+            {/* Immersive Play/Pause & Reset controls */}
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => {
+                  playClickSound();
+                  if (isRunning) {
+                    setIsRunning(false);
+                    setEndTime(null);
+                  } else {
+                    const targetEndTime = Date.now() + timeLeft * 1000;
+                    setEndTime(targetEndTime);
+                    setIsRunning(true);
+                  }
+                }}
+                className={`w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all active:scale-90 border ${
+                  isRunning 
+                    ? 'bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/35' 
+                    : 'bg-violet-600 text-white border-violet-500 hover:bg-violet-700 shadow-lg shadow-violet-500/20'
+                }`}
+                title={isRunning ? 'Pause Timer' : 'Start Timer'}
+              >
+                {isRunning ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-white" />}
+              </button>
+              
+              <button
+                onClick={() => {
+                  playClickSound();
+                  setIsRunning(false);
+                  setEndTime(null);
+                  setTimeLeft(timerDuration);
+                }}
+                className="w-12 h-12 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white rounded-full flex items-center justify-center cursor-pointer transition-all active:scale-90"
+                title="Reset Timer"
+              >
+                <RotateCcw className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Bottom Bar: Ambient Audio Soundscapes Panel */}
+          <div className="w-full max-w-md bg-white/5 border border-white/10 rounded-3xl p-4 sm:p-5 flex flex-col gap-3 z-10 mb-2 shadow-2xl backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <Volume2 className="w-4 h-4 text-violet-400" />
+              <span className="text-[10px] text-brand-grey font-bold uppercase tracking-wider">
+                Ambient Soundscapes
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { id: 'none', label: '🔇 Silent' },
+                { id: 'rain', label: '🌧️ Rain' },
+                { id: 'waves', label: '🌊 Waves' },
+                { id: 'ambient', label: '🌌 Space' }
+              ].map((sound) => (
+                <button
+                  key={sound.id}
+                  onClick={() => {
+                    playClickSound();
+                    setActiveSound(sound.id);
+                  }}
+                  className={`py-2 px-3 rounded-xl text-[10px] sm:text-xs font-extrabold transition-all cursor-pointer border ${
+                    activeSound === sound.id
+                      ? 'bg-violet-650/30 text-violet-300 border-violet-500/50 shadow-md shadow-violet-500/10'
+                      : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  {sound.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
