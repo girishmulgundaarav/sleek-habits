@@ -136,7 +136,7 @@ export const Header = ({ currentView, setCurrentView }) => {
     switch (type) {
       case 'monk':
         return (
-          <svg className={`w-6 h-6 ${isUnlocked ? 'text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg className={`w-5 h-5 sm:w-6 sm:h-6 ${isUnlocked ? 'text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 3c-1.2 2.5-3.6 4-6 4 2.4 0 4.8 1.5 6 4 1.2-2.5 3.6-4 6-4-2.4 0-4.8-1.5-6-4z" />
             <path d="M12 11c-1.8 2-5.4 3-8 3 2.6 0 6.2-1 8-3 1.8 2 5.4 3 8 3-2.6 0-6.2-1-8-3z" />
             <path d="M12 11v10" />
@@ -145,7 +145,7 @@ export const Header = ({ currentView, setCurrentView }) => {
         );
       case 'wizard':
         return (
-          <svg className={`w-6 h-6 ${isUnlocked ? 'text-violet-500 drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg className={`w-5 h-5 sm:w-6 sm:h-6 ${isUnlocked ? 'text-violet-500 drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="m12 3-1.912 5.813a2 2 0 0 0-1.275 1.275L3 12l5.813 1.912a2 2 0 0 0 1.275 1.275L12 21l1.912-5.813a2 2 0 0 0 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 0-1.275-1.275L12 3Z" />
             <path d="m5 3 2 2" />
             <path d="m19 3-2 2" />
@@ -155,7 +155,7 @@ export const Header = ({ currentView, setCurrentView }) => {
         );
       case 'king':
         return (
-          <svg className={`w-6 h-6 ${isUnlocked ? 'text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg className={`w-5 h-5 sm:w-6 sm:h-6 ${isUnlocked ? 'text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z" />
             <path d="M3 20h18" />
             <circle cx="12" cy="4" r="1" fill="currentColor" />
@@ -165,7 +165,7 @@ export const Header = ({ currentView, setCurrentView }) => {
         );
       case 'sleep':
         return (
-          <svg className={`w-6 h-6 ${isUnlocked ? 'text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg className={`w-5 h-5 sm:w-6 sm:h-6 ${isUnlocked ? 'text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
             <path d="M19 3v4" />
             <path d="M17 5h4" />
@@ -173,7 +173,7 @@ export const Header = ({ currentView, setCurrentView }) => {
         );
       case 'target':
         return (
-          <svg className={`w-6 h-6 ${isUnlocked ? 'text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg className={`w-5 h-5 sm:w-6 sm:h-6 ${isUnlocked ? 'text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]' : 'text-slate-400'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
             <circle cx="12" cy="12" r="6" />
             <circle cx="12" cy="12" r="2" />
@@ -350,18 +350,19 @@ export const Header = ({ currentView, setCurrentView }) => {
           </div>
 
           {/* Badges Carousel Row */}
-          <div className="relative flex-1 w-full overflow-hidden flex items-center justify-end">
-            <div className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth py-1 px-2 w-full justify-start md:justify-end">
+          <div className="relative flex-1 w-full overflow-hidden flex items-center justify-center md:justify-end">
+            <div className="flex gap-2 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth py-1 px-2 w-full justify-center md:justify-end">
               {badges.map((badge) => {
                 const Icon = getBadgeIcon(badge.iconType, badge.isUnlocked);
                 return (
                   <div 
                     key={badge.id} 
                     className="group relative flex flex-col items-center shrink-0 cursor-help"
+                    title={`${badge.name}: ${badge.description} (${badge.isUnlocked ? 'Unlocked' : 'Locked'} - ${badge.progressText})`}
                   >
                     {/* Glowing circular container */}
                     <div 
-                      className={`w-12 h-12 rounded-full flex items-center justify-center border transition-all duration-300 ${
+                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border transition-all duration-300 ${
                         badge.isUnlocked
                           ? 'bg-gradient-to-b from-card-bg to-slate-50-custom shadow-md border-slate-200 dark:border-slate-700 hover:scale-110 active:scale-95'
                           : 'bg-slate-100/50 dark:bg-slate-800/30 border-dashed border-slate-300 dark:border-slate-800 opacity-60 filter grayscale'
