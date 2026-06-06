@@ -1,6 +1,7 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Calendar, ChevronLeft, ChevronRight, Sun, Moon, Volume2, VolumeX, LogIn, LogOut } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Sun, Moon, Volume2, VolumeX, LogIn, LogOut, HelpCircle } from 'lucide-react';
+import HelpModal from './HelpModal';
 
 export const Header = ({ currentView, setCurrentView }) => {
   const { 
@@ -22,6 +23,8 @@ export const Header = ({ currentView, setCurrentView }) => {
     xpDetails,
     badges
   } = useContext(AppContext);
+
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   // Generate list of the past 7 days for the calendar strip
   const daysList = [];
@@ -270,6 +273,16 @@ export const Header = ({ currentView, setCurrentView }) => {
             )}
 
             <div className="flex items-center gap-1.5 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-full shrink-0 ml-auto sm:ml-0">
+              <button
+                onClick={() => {
+                  playClickSound();
+                  setIsHelpOpen(true);
+                }}
+                className="p-1.5 text-text-muted hover:text-brand-blue hover:bg-slate-200/50 dark:hover:bg-slate-700/50 rounded-full transition-all active:scale-90 cursor-pointer"
+                title="SleekHabits Guide & Help"
+              >
+                <HelpCircle className="w-4 h-4" />
+              </button>
               <button
                 onClick={handleThemeToggle}
                 className="p-1.5 text-text-muted hover:text-text-main hover:bg-slate-200/50 dark:hover:bg-slate-700/50 rounded-full transition-all active:scale-90 cursor-pointer"
@@ -537,6 +550,13 @@ export const Header = ({ currentView, setCurrentView }) => {
           </div>
 
         </div>
+      )}
+
+      {isHelpOpen && (
+        <HelpModal 
+          onClose={() => setIsHelpOpen(false)} 
+          playClickSound={playClickSound} 
+        />
       )}
     </div>
   );
