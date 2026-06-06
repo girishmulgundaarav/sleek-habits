@@ -43,7 +43,8 @@ export const HabitList = () => {
     isScheduledForDate, 
     calculateStreak,
     requestNotificationPermission,
-    playClickSound
+    playClickSound,
+    theme
   } = useContext(AppContext);
 
   // Quick Add states
@@ -239,8 +240,20 @@ export const HabitList = () => {
                   ? 'border-emerald-500/20 bg-emerald-500/5'
                   : isScheduled
                     ? 'border-card-border-custom hover:border-slate-200 dark:hover:border-slate-700'
-                    : 'border-card-border-custom bg-slate-50-custom/20 opacity-70 hover:opacity-100'
+                    : 'opacity-85 hover:opacity-100'
               }`}
+              style={
+                !isCompleted && !isScheduled
+                  ? {
+                      backgroundColor: theme === 'dark' 
+                        ? `${details.color}12` // Soft custom tint dark (~7% opacity)
+                        : `${details.color}06`, // Soft custom tint light (~2.3% opacity)
+                      borderColor: theme === 'dark'
+                        ? `${details.color}25` // Color-tinted border dark
+                        : `${details.color}15` // Color-tinted border light
+                    }
+                  : undefined
+              }
             >
               {/* Left Side (Text Details & Actions) */}
               <div className="flex flex-col justify-between flex-1 min-w-0">

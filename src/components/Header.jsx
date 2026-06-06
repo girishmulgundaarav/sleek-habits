@@ -350,8 +350,8 @@ export const Header = ({ currentView, setCurrentView }) => {
           </div>
 
           {/* Badges Carousel Row */}
-          <div className="relative flex-1 w-full overflow-hidden flex items-center justify-center md:justify-end">
-            <div className="flex gap-2 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth py-1 px-2 w-full justify-center md:justify-end">
+          <div className="relative flex-1 w-full flex items-center justify-center md:justify-end">
+            <div className="flex gap-2 sm:gap-4 py-1 px-2 justify-center md:justify-end">
               {badges.map((badge) => {
                 const Icon = getBadgeIcon(badge.iconType, badge.isUnlocked);
                 return (
