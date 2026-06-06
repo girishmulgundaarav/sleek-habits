@@ -3,6 +3,32 @@ import { AppContext } from '../context/AppContext';
 import { UndrawIllustration } from './UndrawIllustration';
 import { Check, Flame, Heart, BookOpen, Smile, Sparkles, Plus, Trash2, Clock } from 'lucide-react';
 
+// Helper to determine step values dynamically based on habit properties
+const getHabitStep = (habit) => {
+  if (!habit.isProgressType) return 1;
+  const unit = (habit.unit || '').toLowerCase();
+  const name = (habit.name || '').toLowerCase();
+  if (unit === 'ml' || name.includes('water') || name.includes('hydrate')) {
+    return 250;
+  }
+  if (unit === 'cal' || unit === 'kcal' || name.includes('calories') || name.includes('food')) {
+    return 100;
+  }
+  if (unit === 'steps') {
+    return 1000;
+  }
+  if (unit === 'min' || unit === 'minutes') {
+    if (habit.targetValue >= 60) return 15;
+    if (habit.targetValue >= 30) return 5;
+    return 5;
+  }
+  // Default step mapping based on target value magnitude:
+  if (habit.targetValue >= 1000) return 100;
+  if (habit.targetValue >= 100) return 10;
+  if (habit.targetValue >= 10) return 5;
+  return 1;
+};
+
 export const HabitList = () => {
   const { 
     selectedDate, 
@@ -295,7 +321,7 @@ export const HabitList = () => {
                       <button
                         onClick={() => {
                           playClickSound();
-                          changeHabitProgress(habit.id, selectedDate, -1);
+                          changeHabitProgress(habit.id, selectedDate, -getHabitStep(habit));
                         }}
                         className="w-7 h-7 rounded-full bg-slate-50-custom hover:bg-slate-200/50 dark:hover:bg-slate-700/50 text-text-muted border border-card-border-custom flex items-center justify-center font-extrabold text-xs active:scale-90 transition-all shrink-0 select-none cursor-pointer"
                       >
@@ -312,7 +338,7 @@ export const HabitList = () => {
                       <button
                         onClick={() => {
                           playClickSound();
-                          changeHabitProgress(habit.id, selectedDate, 1);
+                          changeHabitProgress(habit.id, selectedDate, getHabitStep(habit));
                         }}
                         className={`w-7 h-7 rounded-full flex items-center justify-center font-extrabold text-xs active:scale-90 transition-all shrink-0 select-none cursor-pointer ${
                           isCompleted
