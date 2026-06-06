@@ -79,6 +79,7 @@ export const AppProvider = ({ children }) => {
   // Auth state
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const isRealUser = user && user.id !== 'guest';
 
   // Theme state
   const [theme, setTheme] = useState(() => {
@@ -317,6 +318,11 @@ export const AppProvider = ({ children }) => {
   // Fetch remote user data from Supabase
   const fetchUserData = async (currentUser) => {
     if (!currentUser) return;
+    if (currentUser.id === 'guest') {
+      loadGuestData();
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       // 1. Fetch habits
@@ -731,34 +737,46 @@ export const AppProvider = ({ children }) => {
     if (error) console.error('Error logging out:', error.message);
   };
 
+  const startGuestSession = () => {
+    setUser({
+      id: 'guest',
+      email: 'guest@sleekhabits.app',
+      user_metadata: {
+        full_name: 'Guest Explorer',
+        avatar_url: null
+      }
+    });
+    loadGuestData();
+  };
+
   // Sync to local storage
   useEffect(() => {
-    if (!user) {
+    if (!user || user.id === 'guest') {
       localStorage.setItem('sleekhabits_habits_v2', JSON.stringify(habits));
       localStorage.setItem('sleekhabits_migrated_v2', 'true');
     }
   }, [habits, user]);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || user.id === 'guest') {
       localStorage.setItem('sleekhabits_focus', JSON.stringify(focus));
     }
   }, [focus, user]);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || user.id === 'guest') {
       localStorage.setItem('sleekhabits_sleep', JSON.stringify(sleep));
     }
   }, [sleep, user]);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || user.id === 'guest') {
       localStorage.setItem('sleekhabits_moodenergy', JSON.stringify(moodEnergy));
     }
   }, [moodEnergy, user]);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || user.id === 'guest') {
       localStorage.setItem('sleekhabits_goals_v2', JSON.stringify(goals));
     }
   }, [goals, user]);
@@ -846,7 +864,7 @@ export const AppProvider = ({ children }) => {
       return nextHabits;
     });
 
-    if (user) {
+    if (isRealUser) {
       const { error } = await supabase
         .from('habit_history')
         .upsert({
@@ -894,7 +912,7 @@ export const AppProvider = ({ children }) => {
       return nextHabits;
     });
 
-    if (user) {
+    if (isRealUser) {
       const { error } = await supabase
         .from('habit_history')
         .upsert({
@@ -910,7 +928,7 @@ export const AppProvider = ({ children }) => {
   const addNewHabit = async (name, category, isProgressType = false, targetValue = 1, unit = '', recurrenceType = 'daily', weekdays = [], reminderTime = null) => {
     if (habits.length >= 10) return;
 
-    if (user) {
+    if (isRealUser) {
       const newHabitData = {
         user_id: user.id,
         name,
@@ -978,7 +996,7 @@ export const AppProvider = ({ children }) => {
   const deleteHabit = async (habitId) => {
     setHabits(prev => prev.map(h => h.id === habitId ? { ...h, isHidden: true } : h));
 
-    if (user) {
+    if (isRealUser) {
       const { error } = await supabase
         .from('habits')
         .update({ is_hidden: true })
@@ -990,7 +1008,7 @@ export const AppProvider = ({ children }) => {
   const restoreHabit = async (habitId) => {
     setHabits(prev => prev.map(h => h.id === habitId ? { ...h, isHidden: false } : h));
 
-    if (user) {
+    if (isRealUser) {
       const { error } = await supabase
         .from('habits')
         .update({ is_hidden: false })
@@ -1002,7 +1020,7 @@ export const AppProvider = ({ children }) => {
   const deleteHabitPermanently = async (habitId) => {
     setHabits(prev => prev.filter(h => h.id !== habitId));
 
-    if (user) {
+    if (isRealUser) {
       const { error } = await supabase
         .from('habits')
         .delete()
@@ -1017,7 +1035,7 @@ export const AppProvider = ({ children }) => {
     const next = Math.max(0, current + amount);
     setFocus(prev => ({ ...prev, [date]: next }));
 
-    if (user) {
+    if (isRealUser) {
       const { error } = await supabase
         .from('focus')
         .upsert({
@@ -1034,7 +1052,7 @@ export const AppProvider = ({ children }) => {
     const parsedHours = parseFloat(hours) || 0;
     setSleep(prev => ({ ...prev, [date]: parsedHours }));
 
-    if (user) {
+    if (isRealUser) {
       const { error } = await supabase
         .from('sleep')
         .upsert({
@@ -1051,7 +1069,7 @@ export const AppProvider = ({ children }) => {
     const parsedScore = parseInt(score) || 3;
     setMoodEnergy(prev => ({ ...prev, [date]: parsedScore }));
 
-    if (user) {
+    if (isRealUser) {
       const { error } = await supabase
         .from('mood_energy')
         .upsert({
@@ -1065,7 +1083,7 @@ export const AppProvider = ({ children }) => {
 
   // Goals Actions
   const addGoal = async (title, category, targetDate, subtaskTexts, linkedHabitId = null) => {
-    if (user) {
+    if (isRealUser) {
       const { data: goalData, error: goalErr } = await supabase
         .from('goals')
         .insert({
@@ -1174,7 +1192,7 @@ export const AppProvider = ({ children }) => {
       return nextGoals;
     });
 
-    if (user) {
+    if (isRealUser) {
       const { error } = await supabase
         .from('goal_subtasks')
         .update({ completed: nextCompleted })
@@ -1186,7 +1204,7 @@ export const AppProvider = ({ children }) => {
   const deleteGoal = async (goalId) => {
     setGoals(prev => prev.filter(g => g.id !== goalId));
 
-    if (user) {
+    if (isRealUser) {
       const { error } = await supabase
         .from('goals')
         .delete()
@@ -1374,7 +1392,8 @@ export const AppProvider = ({ children }) => {
       user,
       loading,
       signInWithGoogle,
-      handleSignOut
+      handleSignOut,
+      startGuestSession
     }}>
       {children}
     </AppContext.Provider>

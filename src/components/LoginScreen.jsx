@@ -3,7 +3,7 @@ import { AppContext } from '../context/AppContext';
 import { LogIn, CheckCircle, Brain, Moon, Award } from 'lucide-react';
 
 export const LoginScreen = () => {
-  const { signInWithGoogle } = useContext(AppContext);
+  const { signInWithGoogle, startGuestSession } = useContext(AppContext);
 
   return (
     <div className="min-h-screen bg-canvas-bg flex flex-col items-center justify-center p-4 py-8 sm:py-12 relative overflow-y-auto transition-all duration-300">
@@ -70,6 +70,14 @@ export const LoginScreen = () => {
         >
           <LogIn className="w-4 h-4" />
           <span>Sign In with Google</span>
+        </button>
+
+        {/* Guest Session Button */}
+        <button
+          onClick={startGuestSession}
+          className="w-full mt-3 py-3.5 bg-transparent hover:bg-slate-100/50 dark:hover:bg-slate-800/30 text-text-muted hover:text-text-main border border-card-border-custom font-extrabold text-xs tracking-wider uppercase rounded-xl cursor-pointer flex items-center justify-center gap-3 transition-all active:scale-98"
+        >
+          <span>Continue as Guest</span>
         </button>
 
         {/* Footer */}

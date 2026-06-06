@@ -207,7 +207,7 @@ export const Header = ({ currentView, setCurrentView }) => {
           <div className="flex bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-full w-full sm:w-auto justify-center">
             <button 
               onClick={() => handleViewChange('dashboard')}
-              className={`flex-1 sm:flex-none px-6 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+              className={`flex-1 sm:flex-none px-2.5 sm:px-6 py-1.5 rounded-full text-[10px] sm:text-xs font-semibold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
                 currentView === 'dashboard' 
                   ? 'bg-card-bg text-brand-blue shadow-sm dark:shadow-none' 
                   : 'text-text-muted hover:text-text-main'
@@ -217,7 +217,7 @@ export const Header = ({ currentView, setCurrentView }) => {
             </button>
             <button 
               onClick={() => handleViewChange('goals')}
-              className={`flex-1 sm:flex-none px-6 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+              className={`flex-1 sm:flex-none px-2.5 sm:px-6 py-1.5 rounded-full text-[10px] sm:text-xs font-semibold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
                 currentView === 'goals' 
                   ? 'bg-card-bg text-brand-blue shadow-sm dark:shadow-none' 
                   : 'text-text-muted hover:text-text-main'
@@ -227,7 +227,7 @@ export const Header = ({ currentView, setCurrentView }) => {
             </button>
             <button 
               onClick={() => handleViewChange('analysis')}
-              className={`flex-1 sm:flex-none px-6 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+              className={`flex-1 sm:flex-none px-2.5 sm:px-6 py-1.5 rounded-full text-[10px] sm:text-xs font-semibold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
                 currentView === 'analysis' 
                   ? 'bg-card-bg text-brand-blue shadow-sm dark:shadow-none' 
                   : 'text-text-muted hover:text-text-main'
@@ -237,7 +237,7 @@ export const Header = ({ currentView, setCurrentView }) => {
             </button>
             <button 
               onClick={() => handleViewChange('coach')}
-              className={`flex-1 sm:flex-none px-6 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all cursor-pointer ${
+              className={`flex-1 sm:flex-none px-2.5 sm:px-6 py-1.5 rounded-full text-[10px] sm:text-xs font-semibold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
                 currentView === 'coach' 
                   ? 'bg-card-bg text-brand-blue shadow-sm dark:shadow-none' 
                   : 'text-text-muted hover:text-text-main'
@@ -247,70 +247,71 @@ export const Header = ({ currentView, setCurrentView }) => {
             </button>
           </div>
 
-          {/* User Profile Info */}
-          {user && (
-            <div className="flex items-center gap-2 bg-slate-100/80 dark:bg-slate-800/80 p-1 pl-1.5 pr-3 rounded-full shrink-0 select-none">
-              {user.user_metadata?.avatar_url ? (
-                <img 
-                  src={user.user_metadata.avatar_url} 
-                  alt={user.user_metadata.full_name || 'Profile'} 
-                  className="w-5 h-5 rounded-full object-cover border border-brand-blue/20"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="w-5 h-5 rounded-full bg-brand-blue/15 text-brand-blue text-[9px] font-black flex items-center justify-center border border-brand-blue/20">
-                  {user.user_metadata?.full_name ? user.user_metadata.full_name[0].toUpperCase() : 'U'}
-                </div>
-              )}
-              <span className="text-[10px] font-extrabold text-text-main truncate max-w-[100px]">
-                {user.user_metadata?.full_name || user.email}
-              </span>
-            </div>
-          )}
-
-          {/* Theme, Sound & Authentication Actions */}
-          <div className="flex items-center gap-1.5 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-full shrink-0">
-            <button
-              onClick={handleThemeToggle}
-              className="p-1.5 text-text-muted hover:text-text-main hover:bg-slate-200/50 dark:hover:bg-slate-700/50 rounded-full transition-all active:scale-90 cursor-pointer"
-              title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-            >
-              {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-500" />}
-            </button>
-            <button
-              onClick={handleSoundToggle}
-              className="p-1.5 text-text-muted hover:text-text-main hover:bg-slate-200/50 dark:hover:bg-slate-700/50 rounded-full transition-all active:scale-90 cursor-pointer"
-              title={isSoundEnabled ? 'Mute Sounds' : 'Unmute Sounds'}
-            >
-              {isSoundEnabled ? <Volume2 className="w-4 h-4 text-brand-blue" /> : <VolumeX className="w-4 h-4" />}
-            </button>
-
-            {/* Google Authentication Toggles */}
-            {!loading && (
-              user ? (
-                <button
-                  onClick={() => {
-                    playClickSound();
-                    handleSignOut();
-                  }}
-                  className="p-1.5 text-brand-crimson hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-full transition-all active:scale-90 cursor-pointer flex items-center gap-1"
-                  title={`Sign Out (${user.email})`}
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              ) : (
-                <button
-                  onClick={() => {
-                    playClickSound();
-                    signInWithGoogle();
-                  }}
-                  className="p-1.5 text-brand-blue hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-full transition-all active:scale-90 cursor-pointer flex items-center gap-1"
-                  title="Sign In with Google"
-                >
-                  <LogIn className="w-4 h-4" />
-                </button>
-              )
+          {/* User Profile & Actions wrapper for mobile row alignment */}
+          <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
+            {user && (
+              <div className="flex items-center gap-2 bg-slate-100/80 dark:bg-slate-800/80 p-1 pl-1.5 pr-3 rounded-full shrink-0 select-none">
+                {user.user_metadata?.avatar_url ? (
+                  <img 
+                    src={user.user_metadata.avatar_url} 
+                    alt={user.user_metadata.full_name || 'Profile'} 
+                    className="w-5 h-5 rounded-full object-cover border border-brand-blue/20"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="w-5 h-5 rounded-full bg-brand-blue/15 text-brand-blue text-[9px] font-black flex items-center justify-center border border-brand-blue/20">
+                    {user.user_metadata?.full_name ? user.user_metadata.full_name[0].toUpperCase() : 'U'}
+                  </div>
+                )}
+                <span className="text-[10px] font-extrabold text-text-main truncate max-w-[100px]">
+                  {user.user_metadata?.full_name || user.email}
+                </span>
+              </div>
             )}
+
+            <div className="flex items-center gap-1.5 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-full shrink-0 ml-auto sm:ml-0">
+              <button
+                onClick={handleThemeToggle}
+                className="p-1.5 text-text-muted hover:text-text-main hover:bg-slate-200/50 dark:hover:bg-slate-700/50 rounded-full transition-all active:scale-90 cursor-pointer"
+                title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+              >
+                {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-500" />}
+              </button>
+              <button
+                onClick={handleSoundToggle}
+                className="p-1.5 text-text-muted hover:text-text-main hover:bg-slate-200/50 dark:hover:bg-slate-700/50 rounded-full transition-all active:scale-90 cursor-pointer"
+                title={isSoundEnabled ? 'Mute Sounds' : 'Unmute Sounds'}
+              >
+                {isSoundEnabled ? <Volume2 className="w-4 h-4 text-brand-blue" /> : <VolumeX className="w-4 h-4" />}
+              </button>
+
+              {/* Google Authentication Toggles */}
+              {!loading && (
+                user ? (
+                  <button
+                    onClick={() => {
+                      playClickSound();
+                      handleSignOut();
+                    }}
+                    className="p-1.5 text-brand-crimson hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-full transition-all active:scale-90 cursor-pointer flex items-center gap-1"
+                    title={`Sign Out (${user.email})`}
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      playClickSound();
+                      signInWithGoogle();
+                    }}
+                    className="p-1.5 text-brand-blue hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-full transition-all active:scale-90 cursor-pointer flex items-center gap-1"
+                    title="Sign In with Google"
+                  >
+                    <LogIn className="w-4 h-4" />
+                  </button>
+                )
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -320,20 +321,20 @@ export const Header = ({ currentView, setCurrentView }) => {
         <div className="bg-card-bg/60 dark:bg-card-bg/40 backdrop-blur-md rounded-card shadow-card border border-card-border-custom p-4 flex flex-col md:flex-row items-center gap-6 justify-between select-none">
           
           {/* Level Progress Indicator */}
-          <div className="flex items-center gap-4 w-full md:w-auto shrink-0 border-b md:border-b-0 md:border-r border-card-border-custom pb-4 md:pb-0 md:pr-6 justify-between md:justify-start">
-            <div className="relative flex items-center justify-center w-14 h-14 bg-gradient-to-tr from-brand-blue to-violet-500 rounded-full shadow-[0_0_15px_rgba(0,102,255,0.4)] border-2 border-white/20 shrink-0">
+          <div className="flex items-center gap-4 w-full md:w-auto shrink-0 border-b md:border-b-0 md:border-r border-card-border-custom pb-4 md:pb-0 md:pr-6 justify-start">
+            <div className="relative flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-tr from-brand-blue to-violet-500 rounded-full shadow-[0_0_15px_rgba(0,102,255,0.4)] border-2 border-white/20 shrink-0">
               <div className="flex flex-col items-center leading-none text-white">
                 <span className="text-[8px] font-black uppercase tracking-wider">Lvl</span>
-                <span className="text-xl font-extrabold">{xpDetails.level}</span>
+                <span className="text-lg sm:text-xl font-extrabold">{xpDetails.level}</span>
               </div>
               {/* Outer pulsing ring */}
               <div className="absolute inset-0 rounded-full border border-brand-blue/30 animate-ping [animation-duration:3s]" />
             </div>
 
-            <div className="flex flex-col gap-1.5 flex-1 max-w-[200px] text-left ml-2">
-              <div className="flex justify-between items-baseline">
-                <span className="text-[10px] text-brand-grey font-bold uppercase tracking-wider">XP Progress</span>
-                <span className="text-[10px] font-extrabold text-brand-blue">{xpDetails.xpInLevel} / {xpDetails.xpNeeded} XP</span>
+            <div className="flex flex-col gap-1.5 flex-1 md:max-w-[200px] text-left ml-2">
+              <div className="flex justify-between items-baseline gap-2">
+                <span className="text-[9px] sm:text-[10px] text-brand-grey font-bold uppercase tracking-wider">XP Progress</span>
+                <span className="text-[9px] sm:text-[10px] font-extrabold text-brand-blue whitespace-nowrap">{xpDetails.xpInLevel} / {xpDetails.xpNeeded} XP</span>
               </div>
               {/* Custom Level Progress Bar */}
               <div className="w-full h-2 bg-slate-100 dark:bg-slate-800/80 rounded-full overflow-hidden border border-card-border-custom">
@@ -342,7 +343,7 @@ export const Header = ({ currentView, setCurrentView }) => {
                   style={{ width: `${xpDetails.progressPercentage}%` }}
                 />
               </div>
-              <span className="text-[9px] text-text-muted font-semibold leading-none">
+              <span className="text-[8px] sm:text-[9px] text-text-muted font-semibold leading-none">
                 Total Earned: {xpDetails.totalXP} XP
               </span>
             </div>
