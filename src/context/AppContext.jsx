@@ -1213,6 +1213,112 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const saveDailyQuickLog = async ({
+    date,
+    sleepHours,
+    focusMins,
+    moodScore,
+    habitUpdates
+  }) => {
+    // 1. Update Sleep
+    if (sleepHours !== undefined) {
+      const parsedHours = parseFloat(sleepHours) || 0;
+      setSleep(prev => ({ ...prev, [date]: parsedHours }));
+      if (isRealUser) {
+        const { error } = await supabase
+          .from('sleep')
+          .upsert({
+            user_id: user.id,
+            date: date,
+            hours: parsedHours
+          }, { onConflict: 'user_id, date' });
+        if (error) console.error('Error syncing sleep:', error.message);
+      }
+    }
+
+    // 2. Update Focus
+    if (focusMins !== undefined) {
+      const parsedMins = parseInt(focusMins) || 0;
+      setFocus(prev => ({ ...prev, [date]: parsedMins }));
+      if (isRealUser) {
+        const { error } = await supabase
+          .from('focus')
+          .upsert({
+            user_id: user.id,
+            date: date,
+            minutes: parsedMins
+          }, { onConflict: 'user_id, date' });
+        if (error) console.error('Error syncing focus:', error.message);
+      }
+    }
+
+    // 3. Update Mood & Energy
+    if (moodScore !== undefined) {
+      const parsedScore = parseInt(moodScore) || 3;
+      setMoodEnergy(prev => ({ ...prev, [date]: parsedScore }));
+      if (isRealUser) {
+        const { error } = await supabase
+          .from('mood_energy')
+          .upsert({
+            user_id: user.id,
+            date: date,
+            score: parsedScore
+          }, { onConflict: 'user_id, date' });
+        if (error) console.error('Error syncing mood energy:', error.message);
+      }
+    }
+
+    // 4. Update Habits
+    if (habitUpdates && habitUpdates.length > 0) {
+      setHabits(prev => {
+        const nextHabits = prev.map(habit => {
+          const update = habitUpdates.find(u => u.id === habit.id);
+          if (update !== undefined) {
+            const history = { ...habit.history };
+            if (habit.isProgressType) {
+              history[date] = Number(update.value);
+            } else {
+              history[date] = Boolean(update.value);
+            }
+            return { ...habit, history };
+          }
+          return habit;
+        });
+
+        // Confetti logic: check if this completes the schedule for the day
+        const scheduled = nextHabits.filter(h => isScheduledForDate(h, date) && !h.isHidden);
+        if (scheduled.length > 0) {
+          const allCompleted = scheduled.every(h => isHabitCompleted(h, date));
+          const previouslyCompleted = prev.filter(h => isScheduledForDate(h, date) && !h.isHidden).every(h => isHabitCompleted(h, date));
+          if (allCompleted && !previouslyCompleted) {
+            confetti({
+              particleCount: 80,
+              spread: 60,
+              origin: { y: 0.65 },
+              colors: ['#0066FF', '#FF4B55', '#10B981']
+            });
+          }
+        }
+
+        return nextHabits;
+      });
+
+      if (isRealUser) {
+        for (const update of habitUpdates) {
+          const { error } = await supabase
+            .from('habit_history')
+            .upsert({
+              habit_id: update.id,
+              user_id: user.id,
+              date: date,
+              progress: typeof update.value === 'boolean' ? (update.value ? 1 : 0) : update.value
+            }, { onConflict: 'habit_id, date' });
+          if (error) console.error('Error syncing habit:', error.message);
+        }
+      }
+    }
+  };
+
   // Dynamic XP and Badges calculation
   const getXPAndBadges = () => {
     // 1. Habits XP (15 XP per completion)
@@ -1393,7 +1499,8 @@ export const AppProvider = ({ children }) => {
       loading,
       signInWithGoogle,
       handleSignOut,
-      startGuestSession
+      startGuestSession,
+      saveDailyQuickLog
     }}>
       {children}
     </AppContext.Provider>

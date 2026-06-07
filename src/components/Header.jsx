@@ -2,6 +2,8 @@ import { useContext, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 import { Calendar, ChevronLeft, ChevronRight, Sun, Moon, Volume2, VolumeX, LogIn, LogOut, HelpCircle } from 'lucide-react';
 import HelpModal from './HelpModal';
+import QuickLogModal from './QuickLogModal';
+
 
 export const Header = ({ currentView, setCurrentView }) => {
   const { 
@@ -25,6 +27,8 @@ export const Header = ({ currentView, setCurrentView }) => {
   } = useContext(AppContext);
 
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isQuickLogOpen, setIsQuickLogOpen] = useState(false);
+
 
   // Generate list of the past 7 days for the calendar strip
   const daysList = [];
@@ -468,6 +472,17 @@ export const Header = ({ currentView, setCurrentView }) => {
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
+                
+                <button
+                  onClick={() => {
+                    playClickSound();
+                    setIsQuickLogOpen(true);
+                  }}
+                  className="ml-2 flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-[11px] rounded-full transition-all active:scale-95 shadow-sm cursor-pointer whitespace-nowrap"
+                  title="Daily Quick Log Center"
+                >
+                  <span>⚡ Quick Log</span>
+                </button>
               </div>
             </div>
 
@@ -557,6 +572,10 @@ export const Header = ({ currentView, setCurrentView }) => {
           onClose={() => setIsHelpOpen(false)} 
           playClickSound={playClickSound} 
         />
+      )}
+
+      {isQuickLogOpen && (
+        <QuickLogModal onClose={() => setIsQuickLogOpen(false)} />
       )}
     </div>
   );
