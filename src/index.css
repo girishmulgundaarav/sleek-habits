@@ -125,3 +125,11 @@ dialog[open]::backdrop {
   }
 }
 
+/* Responsive Quick Log text hiding on small viewports */
+@media (max-width: 420px) {
+  .quick-log-text {
+    display: none;
+  }
+}
+
+

@@ -436,15 +436,15 @@ export const Header = ({ currentView, setCurrentView }) => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
           
           {/* Date Selector Navigation Strip */}
-          <div className="md:col-span-2 bg-card-bg rounded-card shadow-card border border-card-border-custom p-4 sm:p-5 flex flex-col gap-4 justify-between">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-brand-blue" />
-                <span className="font-semibold text-text-main text-sm">
+          <div className="md:col-span-2 bg-card-bg rounded-card shadow-card border border-card-border-custom p-3 sm:p-5 flex flex-col gap-3 sm:gap-4 justify-between">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <Calendar className="hidden sm:block w-4 h-4 text-brand-blue" />
+                <span className="font-semibold text-text-main text-xs sm:text-sm">
                   {formatDateLabel(selectedDate)}
                 </span>
                 {selectedDate === todayStr && (
-                  <span className="px-2 py-0.5 bg-brand-blue/10 text-brand-blue text-[10px] font-bold rounded-full">
+                  <span className="hidden sm:inline px-2 py-0.5 bg-brand-blue/10 text-brand-blue text-[10px] font-bold rounded-full">
                     Today
                   </span>
                 )}
@@ -478,10 +478,11 @@ export const Header = ({ currentView, setCurrentView }) => {
                     playClickSound();
                     setIsQuickLogOpen(true);
                   }}
-                  className="ml-2 flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-[11px] rounded-full transition-all active:scale-95 shadow-sm cursor-pointer whitespace-nowrap"
+                  className="ml-1 flex items-center gap-0.5 px-2 py-1 sm:px-3.5 sm:py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-[11px] rounded-full transition-all active:scale-95 shadow-sm cursor-pointer whitespace-nowrap"
                   title="Daily Quick Log Center"
                 >
-                  <span>⚡ Quick Log</span>
+                  <span>⚡</span>
+                  <span className="quick-log-text ml-0.5">Quick Log</span>
                 </button>
               </div>
             </div>

@@ -14,7 +14,7 @@ export const QuickLogModal = ({ onClose }) => {
     playClickSound
   } = useContext(AppContext);
 
-  const dialogRef = useRef(null);
+  const modalRef = useRef(null);
 
   // 1. Identify active scheduled habits for selectedDate
   const scheduledHabits = habits.filter(h => isScheduledForDate(h, selectedDate) && !h.isHidden);
@@ -41,44 +41,22 @@ export const QuickLogModal = ({ onClose }) => {
     return states;
   });
 
-  // 3. Show dialog modal on mount
+  // 3. Close on Escape key press
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (dialog) {
-      dialog.showModal();
-    }
-    const handleClose = () => {
-      onClose();
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
     };
-    dialog?.addEventListener('close', handleClose);
-    return () => {
-      dialog?.removeEventListener('close', handleClose);
-    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  // 4. Backdrop click light-dismiss fallback
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    const handleClick = (e) => {
-      if (e.target !== dialog) return;
-      const rect = dialog.getBoundingClientRect();
-      const isDialogContent = (
-        rect.top <= e.clientY &&
-        e.clientY <= rect.top + rect.height &&
-        rect.left <= e.clientX &&
-        e.clientX <= rect.left + rect.width
-      );
-      if (!isDialogContent) {
-        if (playClickSound) playClickSound();
-        dialog.close();
-      }
-    };
-    dialog.addEventListener('click', handleClick);
-    return () => {
-      dialog.removeEventListener('click', handleClick);
-    };
-  }, [playClickSound]);
+  // Click outside modal content to close (light-dismiss)
+  const handleBackdropClick = (e) => {
+    if (modalRef.current && !modalRef.current.contains(e.target)) {
+      if (playClickSound) playClickSound();
+      onClose();
+    }
+  };
 
   // Submit all metrics
   const handleSubmit = async (e) => {
@@ -101,7 +79,7 @@ export const QuickLogModal = ({ onClose }) => {
       habitUpdates
     });
 
-    dialogRef.current?.close();
+    onClose();
   };
 
   // Helper for step sizes
@@ -153,36 +131,40 @@ export const QuickLogModal = ({ onClose }) => {
   };
 
   return (
-    <dialog
-      ref={dialogRef}
-      className="w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] md:max-h-[85vh] bg-card-bg/95 dark:bg-slate-900/90 border border-card-border-custom shadow-2xl rounded-card overflow-hidden text-left outline-none p-0"
+    <div 
+      onClick={handleBackdropClick}
+      className="fixed inset-0 z-[10000] bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
     >
-      <form onSubmit={handleSubmit} className="w-full flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden">
-        {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-card-border-custom flex justify-between items-center bg-slate-50-custom/25 select-none shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-amber-500" />
+      <div 
+        ref={modalRef}
+        className="w-full max-w-2xl max-h-[85vh] sm:max-h-[80vh] bg-card-bg/95 dark:bg-slate-900/95 border border-card-border-custom shadow-2xl rounded-card flex flex-col overflow-hidden text-left relative"
+      >
+        <form onSubmit={handleSubmit} className="w-full h-full flex flex-col overflow-hidden">
+          {/* Modal Header */}
+          <div className="px-6 py-4 border-b border-card-border-custom flex justify-between items-center bg-slate-50-custom/25 select-none shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-extrabold text-text-main">Daily Quick Log Center</span>
+                <span className="text-[9px] text-brand-grey font-bold uppercase tracking-wider">
+                  Log metrics for {formatDateLabel(selectedDate)}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-extrabold text-text-main">Daily Quick Log Center</span>
-              <span className="text-[9px] text-brand-grey font-bold uppercase tracking-wider">
-                Log metrics for {formatDateLabel(selectedDate)}
-              </span>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (playClickSound) playClickSound();
+                onClose();
+              }}
+              className="p-1.5 rounded-full text-text-muted hover:text-text-main hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+              title="Close Modal"
+            >
+              <X className="w-4.5 h-4.5" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              if (playClickSound) playClickSound();
-              dialogRef.current?.close();
-            }}
-            className="p-1.5 rounded-full text-text-muted hover:text-text-main hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
-            title="Close Modal"
-          >
-            <X className="w-4.5 h-4.5" />
-          </button>
-        </div>
 
         {/* Scrollable Container Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 select-none">
@@ -439,27 +421,28 @@ export const QuickLogModal = ({ onClose }) => {
 
       {/* Modal Unified Actions */}
       <div className="px-6 py-4 border-t border-card-border-custom flex gap-3 bg-slate-50-custom/10 shrink-0">
-          <button
-            type="button"
-            onClick={() => {
-              if (playClickSound) playClickSound();
-              dialogRef.current?.close();
-            }}
-            className="flex-1 py-3 bg-slate-50-custom hover:bg-slate-200/50 dark:hover:bg-slate-700/50 border border-card-border-custom text-text-muted hover:text-text-main rounded-2xl text-xs font-extrabold transition-all cursor-pointer active:scale-[0.98] text-center"
-          >
-            Cancel
-          </button>
-          
-          <button
-            type="submit"
-            className="flex-1 py-3 bg-gradient-to-r from-brand-blue to-violet-500 text-white rounded-2xl text-xs font-extrabold transition-all shadow-md shadow-brand-blue/15 hover:shadow-lg hover:shadow-brand-blue/20 cursor-pointer active:scale-[0.98] text-center"
-          >
-            Save Daily Logs
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (playClickSound) playClickSound();
+            onClose();
+          }}
+          className="flex-1 py-3 bg-slate-50-custom hover:bg-slate-200/50 dark:hover:bg-slate-700/50 border border-card-border-custom text-text-muted hover:text-text-main rounded-2xl text-xs font-extrabold transition-all cursor-pointer active:scale-[0.98] text-center"
+        >
+          Cancel
+        </button>
+        
+        <button
+          type="submit"
+          className="flex-1 py-3 bg-gradient-to-r from-brand-blue to-violet-500 text-white rounded-2xl text-xs font-extrabold transition-all shadow-md shadow-brand-blue/15 hover:shadow-lg hover:shadow-brand-blue/20 cursor-pointer active:scale-[0.98] text-center"
+        >
+          Save Daily Logs
+        </button>
+      </div>
 
       </form>
-    </dialog>
+    </div>
+  </div>
   );
 };
 
