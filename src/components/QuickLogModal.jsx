@@ -155,7 +155,7 @@ export const QuickLogModal = ({ onClose }) => {
   return (
     <dialog
       ref={dialogRef}
-      className="w-full max-w-2xl bg-card-bg/95 dark:bg-slate-900/90 border border-card-border-custom shadow-2xl rounded-card flex flex-col overflow-hidden text-left outline-none"
+      className="w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] md:max-h-[85vh] bg-card-bg/95 dark:bg-slate-900/90 border border-card-border-custom shadow-2xl rounded-card flex flex-col overflow-hidden text-left outline-none"
     >
       {/* Modal Header */}
       <div className="px-6 py-4 border-b border-card-border-custom flex justify-between items-center bg-slate-50-custom/25 select-none">
@@ -182,7 +182,7 @@ export const QuickLogModal = ({ onClose }) => {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 select-none">
+      <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 select-none">
         
         {/* Section 1: Daily Wellness Stats */}
         <div className="flex flex-col gap-3">
