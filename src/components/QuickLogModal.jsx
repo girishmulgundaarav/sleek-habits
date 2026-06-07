@@ -155,34 +155,37 @@ export const QuickLogModal = ({ onClose }) => {
   return (
     <dialog
       ref={dialogRef}
-      className="w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] md:max-h-[85vh] bg-card-bg/95 dark:bg-slate-900/90 border border-card-border-custom shadow-2xl rounded-card flex flex-col overflow-hidden text-left outline-none"
+      className="w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] md:max-h-[85vh] bg-card-bg/95 dark:bg-slate-900/90 border border-card-border-custom shadow-2xl rounded-card overflow-hidden text-left outline-none p-0"
     >
-      {/* Modal Header */}
-      <div className="px-6 py-4 border-b border-card-border-custom flex justify-between items-center bg-slate-50-custom/25 select-none">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-amber-500" />
+      <form onSubmit={handleSubmit} className="w-full flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden">
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b border-card-border-custom flex justify-between items-center bg-slate-50-custom/25 select-none shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-extrabold text-text-main">Daily Quick Log Center</span>
+              <span className="text-[9px] text-brand-grey font-bold uppercase tracking-wider">
+                Log metrics for {formatDateLabel(selectedDate)}
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-extrabold text-text-main">Daily Quick Log Center</span>
-            <span className="text-[9px] text-brand-grey font-bold uppercase tracking-wider">
-              Log metrics for {formatDateLabel(selectedDate)}
-            </span>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (playClickSound) playClickSound();
+              dialogRef.current?.close();
+            }}
+            className="p-1.5 rounded-full text-text-muted hover:text-text-main hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+            title="Close Modal"
+          >
+            <X className="w-4.5 h-4.5" />
+          </button>
         </div>
-        <button
-          onClick={() => {
-            if (playClickSound) playClickSound();
-            dialogRef.current?.close();
-          }}
-          className="p-1.5 rounded-full text-text-muted hover:text-text-main hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
-          title="Close Modal"
-        >
-          <X className="w-4.5 h-4.5" />
-        </button>
-      </div>
 
-      <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 select-none">
+        {/* Scrollable Container Body */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4 sm:gap-6 select-none">
         
         {/* Section 1: Daily Wellness Stats */}
         <div className="flex flex-col gap-3">
@@ -432,9 +435,10 @@ export const QuickLogModal = ({ onClose }) => {
             </div>
           )}
         </div>
+      </div>
 
-        {/* Modal Unified Actions */}
-        <div className="border-t border-card-border-custom pt-4 flex gap-3 mt-2 shrink-0">
+      {/* Modal Unified Actions */}
+      <div className="px-6 py-4 border-t border-card-border-custom flex gap-3 bg-slate-50-custom/10 shrink-0">
           <button
             type="button"
             onClick={() => {
