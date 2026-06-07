@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { supabase } from '../supabaseClient';
+import { sendDailySummaryEmail } from '../services/emailService';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const AppContext = createContext();
@@ -1316,6 +1317,29 @@ export const AppProvider = ({ children }) => {
           if (error) console.error('Error syncing habit:', error.message);
         }
       }
+    }
+
+    // 5. Send daily summary email
+    const toEmail = user?.email;
+    const userName =
+      user?.user_metadata?.full_name ||
+      user?.user_metadata?.name ||
+      user?.email?.split('@')[0] ||
+      null;
+
+    if (toEmail && toEmail !== 'guest@sleekhabits.app') {
+      // Read latest habits state for habit names/targets
+      // We capture the value via a ref-like approach: use a local snapshot
+      sendDailySummaryEmail({
+        toEmail,
+        date,
+        sleepHours: parseFloat(sleepHours) || 0,
+        focusMins: parseInt(focusMins) || 0,
+        moodScore: parseInt(moodScore) || 3,
+        habitUpdates: habitUpdates || [],
+        habits, // current habits state captured in this closure
+        userName
+      }).catch(err => console.error('[saveDailyQuickLog] Email send failed:', err));
     }
   };
 
