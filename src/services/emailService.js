@@ -1,5 +1,12 @@
+// VITE_ env vars are embedded at build time — must redeploy on Vercel after adding them
 const RESEND_API_KEY = import.meta.env.VITE_RESEND_API_KEY;
 const FROM_EMAIL = 'SleekHabits <onboarding@resend.dev>';
+
+// ⚠️ Resend's sandbox sender (onboarding@resend.dev) can ONLY deliver to the
+// email address that owns the Resend account. Set VITE_RESEND_TO_EMAIL in your
+// Vercel env to override the recipient (useful when the logged-in user's email
+// differs from your Resend account email).
+const OVERRIDE_TO_EMAIL = import.meta.env.VITE_RESEND_TO_EMAIL || null;
 
 const MOOD_LABELS = { 1: 'Awful 😞', 2: 'Meh 😐', 3: 'Good 🙂', 4: 'High ⚡', 5: 'Peak ✨' };
 const MOOD_COLORS = { 1: '#ef4444', 2: '#f59e0b', 3: '#10b981', 4: '#3b82f6', 5: '#8b5cf6' };
@@ -180,15 +187,21 @@ function buildEmailHTML({ date, sleepHours, focusMins, moodScore, habitUpdates, 
 
 /**
  * Sends the daily summary email via Resend API.
+ *
+ * Common failure reasons:
+ *  1. VITE_RESEND_API_KEY not set or Vercel wasn't redeployed after adding it.
+ *  2. Using onboarding@resend.dev as sender — Resend ONLY delivers to the
+ *     Resend account owner's email. Set VITE_RESEND_TO_EMAIL to override.
+ *
  * @param {object} params
- * @param {string} params.toEmail  - Recipient email address
- * @param {string} params.date     - "YYYY-MM-DD"
+ * @param {string} params.toEmail       - Recipient from Supabase auth
+ * @param {string} params.date          - "YYYY-MM-DD"
  * @param {number} params.sleepHours
  * @param {number} params.focusMins
  * @param {number} params.moodScore
- * @param {Array}  params.habitUpdates - [{ id, value }]
- * @param {Array}  params.habits       - full habits array from context (for names/targets)
- * @param {string} params.userName     - display name of the user
+ * @param {Array}  params.habitUpdates  - [{ id, value }]
+ * @param {Array}  params.habits        - full habits array from context
+ * @param {string} params.userName      - display name of the user
  */
 export async function sendDailySummaryEmail({
   toEmail,
@@ -200,13 +213,31 @@ export async function sendDailySummaryEmail({
   habits,
   userName
 }) {
+  // --- Diagnostic logs (visible in browser DevTools → Console) ---
+  console.group('[SleekHabits] sendDailySummaryEmail');
+  console.log('API key present:', !!RESEND_API_KEY);
+  console.log('Auth user email:', toEmail);
+  console.log('Effective recipient:', OVERRIDE_TO_EMAIL || toEmail);
+  console.log('Date:', date, '| Sleep:', sleepHours, '| Focus:', focusMins, '| Mood:', moodScore);
+  console.log('Habits to log:', habitUpdates?.length ?? 0);
+
   if (!RESEND_API_KEY) {
-    console.warn('[emailService] VITE_RESEND_API_KEY is not set. Skipping email.');
-    return;
+    console.error(
+      '❌ VITE_RESEND_API_KEY is missing. ' +
+      'Add it in Vercel → Settings → Environment Variables, then trigger a Redeploy.'
+    );
+    console.groupEnd();
+    return { success: false, error: 'missing_api_key' };
   }
-  if (!toEmail) {
-    console.warn('[emailService] No recipient email. Skipping.');
-    return;
+
+  // Resend sandbox restriction: onboarding@resend.dev can only deliver to
+  // the Resend account owner. Use OVERRIDE_TO_EMAIL to work around this.
+  const recipient = OVERRIDE_TO_EMAIL || toEmail;
+
+  if (!recipient) {
+    console.warn('❌ No recipient email available. Skipping.');
+    console.groupEnd();
+    return { success: false, error: 'no_recipient' };
   }
 
   const [y, m, d] = date.split('-').map(Number);
@@ -216,6 +247,15 @@ export async function sendDailySummaryEmail({
 
   const html = buildEmailHTML({ date, sleepHours, focusMins, moodScore, habitUpdates, habits, userName });
 
+  const payload = {
+    from: FROM_EMAIL,
+    to: [recipient],
+    subject: `✨ Your Daily Habit Summary — ${label}`,
+    html
+  };
+
+  console.log('📤 Sending to:', recipient, '| Subject:', payload.subject);
+
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -223,25 +263,25 @@ export async function sendDailySummaryEmail({
         'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        from: FROM_EMAIL,
-        to: [toEmail],
-        subject: `✨ Your Daily Habit Summary — ${label}`,
-        html
-      })
+      body: JSON.stringify(payload)
     });
 
+    const responseText = await res.text();
+    let responseData = {};
+    try { responseData = JSON.parse(responseText); } catch { /* non-JSON */ }
+
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      console.error('[emailService] Resend API error:', err);
-      return { success: false, error: err };
+      console.error('❌ Resend API error', res.status, responseData);
+      console.groupEnd();
+      return { success: false, error: responseData };
     }
 
-    const data = await res.json();
-    console.log('[emailService] Email sent successfully:', data.id);
-    return { success: true, id: data.id };
+    console.log('✅ Email sent! ID:', responseData.id);
+    console.groupEnd();
+    return { success: true, id: responseData.id };
   } catch (err) {
-    console.error('[emailService] Network error sending email:', err);
+    console.error('❌ Network error:', err.message);
+    console.groupEnd();
     return { success: false, error: err.message };
   }
 }
