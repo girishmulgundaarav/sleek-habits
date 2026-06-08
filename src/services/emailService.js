@@ -28,7 +28,7 @@ function buildEmailHTML({ date, sleepHours, focusMins, moodScore, habitUpdates, 
       : Boolean(update.value);
     const valueStr = habit.isProgressType
       ? `${update.value} / ${habit.targetValue} ${habit.unit}`
-      : (Boolean(update.value) ? 'Done ✅' : 'Skipped');
+      : (update.value ? 'Done ✅' : 'Skipped');
     return `
       <tr>
         <td style="padding:10px 12px;border-bottom:1px solid #1e293b;color:#cbd5e1;font-size:13px;">${habit.name}</td>

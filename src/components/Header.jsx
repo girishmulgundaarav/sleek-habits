@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Calendar, ChevronLeft, ChevronRight, Sun, Moon, Volume2, VolumeX, LogIn, LogOut, HelpCircle } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, Sun, Moon, Volume2, VolumeX, LogIn, LogOut, HelpCircle, Mic, MicOff } from 'lucide-react';
 import HelpModal from './HelpModal';
 import QuickLogModal from './QuickLogModal';
 
@@ -17,6 +17,8 @@ export const Header = ({ currentView, setCurrentView }) => {
     setTheme,
     isSoundEnabled,
     setIsSoundEnabled,
+    isVoiceEnabled,
+    setIsVoiceEnabled,
     playClickSound,
     user,
     loading,
@@ -127,6 +129,37 @@ export const Header = ({ currentView, setCurrentView }) => {
       }
     }
   };
+
+  const handleVoiceToggle = () => {
+    playClickSound();
+    const newVal = !isVoiceEnabled;
+    setIsVoiceEnabled(newVal);
+    if (newVal) {
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance("AI voice enabled");
+        const voices = window.speechSynthesis.getVoices();
+        if (voices && voices.length > 0) {
+          const preferredVoice = voices.find(v => 
+            (v.lang.startsWith('en') && (
+              v.name.includes('Natural') || 
+              v.name.includes('Google') || 
+              v.name.includes('Premium') ||
+              v.name.includes('Samantha') ||
+              v.name.includes('Daniel')
+            ))
+          ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+          if (preferredVoice) {
+            utterance.voice = preferredVoice;
+          }
+        }
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        void e;
+      }
+    }
+  };
+
 
   const getBadgeGlow = (type) => {
     switch (type) {
@@ -301,6 +334,14 @@ export const Header = ({ currentView, setCurrentView }) => {
               >
                 {isSoundEnabled ? <Volume2 className="w-4 h-4 text-brand-blue" /> : <VolumeX className="w-4 h-4" />}
               </button>
+              <button
+                onClick={handleVoiceToggle}
+                className="p-1.5 text-text-muted hover:text-text-main hover:bg-slate-200/50 dark:hover:bg-slate-700/50 rounded-full transition-all active:scale-90 cursor-pointer"
+                title={isVoiceEnabled ? 'Mute AI Voice' : 'Unmute AI Voice'}
+              >
+                {isVoiceEnabled ? <Mic className="w-4 h-4 text-brand-blue" /> : <MicOff className="w-4 h-4" />}
+              </button>
+
 
               {/* Google Authentication Toggles */}
               {!loading && (

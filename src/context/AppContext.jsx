@@ -108,6 +108,47 @@ export const AppProvider = ({ children }) => {
     localStorage.setItem('sleekhabits_sound', isSoundEnabled ? 'true' : 'false');
   }, [isSoundEnabled]);
 
+  // Voice state
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState(() => {
+    return localStorage.getItem('sleekhabits_voice') !== 'false';
+  });
+
+  // Persist voice state
+  useEffect(() => {
+    localStorage.setItem('sleekhabits_voice', isVoiceEnabled ? 'true' : 'false');
+  }, [isVoiceEnabled]);
+
+  // Speak text using Web Speech API
+  const speakText = (text) => {
+    if (!isVoiceEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        const preferredVoice = voices.find(v => 
+          (v.lang.startsWith('en') && (
+            v.name.includes('Natural') || 
+            v.name.includes('Google') || 
+            v.name.includes('Premium') ||
+            v.name.includes('Samantha') ||
+            v.name.includes('Daniel')
+          ))
+        ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+        
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
+      }
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      console.error("Speech synthesis error:", err);
+    }
+  };
+
+
   // Play synthesized Web Audio click sound
   const playClickSound = () => {
     if (!isSoundEnabled || typeof window === 'undefined') return;
@@ -826,12 +867,25 @@ export const AppProvider = ({ children }) => {
 
     const currentVal = targetHabit.history[date] || 0;
     let nextVal;
+    const target = targetHabit.targetValue || 1;
     if (targetHabit.isProgressType) {
-      const target = targetHabit.targetValue || 1;
       nextVal = currentVal >= target ? 0 : target;
     } else {
       nextVal = !currentVal ? 1 : 0;
     }
+
+    const wasCompleted = targetHabit.isProgressType
+      ? (currentVal >= target)
+      : (currentVal === true || currentVal > 0);
+
+    const isNowCompleted = targetHabit.isProgressType
+      ? (nextVal >= target)
+      : (nextVal > 0);
+
+    if (isNowCompleted && !wasCompleted) {
+      speakText(`Fantastic! You've completed your habit: ${targetHabit.name}!`);
+    }
+
 
     setHabits(prev => {
       const nextHabits = prev.map(habit => {
@@ -884,6 +938,15 @@ export const AppProvider = ({ children }) => {
 
     const currentVal = targetHabit.history[date] || 0;
     const nextVal = Math.max(0, currentVal + delta);
+
+    const target = targetHabit.targetValue || 1;
+    const wasCompleted = currentVal >= target;
+    const isNowCompleted = nextVal >= target;
+
+    if (isNowCompleted && !wasCompleted) {
+      speakText(`Awesome job! You've completed your habit: ${targetHabit.name}!`);
+    }
+
 
     setHabits(prev => {
       const nextHabits = prev.map(habit => {
@@ -1160,6 +1223,11 @@ export const AppProvider = ({ children }) => {
     if (!targetSubtask) return;
     const nextCompleted = !targetSubtask.completed;
 
+    if (nextCompleted && !targetSubtask.completed) {
+      speakText(`Great! You've completed: ${targetSubtask.text}!`);
+    }
+
+
     setGoals(prev => {
       const nextGoals = prev.map(goal => {
         if (goal.id === goalId) {
@@ -1271,6 +1339,26 @@ export const AppProvider = ({ children }) => {
 
     // 4. Update Habits
     if (habitUpdates && habitUpdates.length > 0) {
+      habitUpdates.forEach(update => {
+        const targetHabit = habits.find(h => h.id === update.id);
+        if (!targetHabit) return;
+
+        const currentVal = targetHabit.history[date] || 0;
+        const target = targetHabit.targetValue || 1;
+
+        const wasCompleted = targetHabit.isProgressType
+          ? (currentVal >= target)
+          : (currentVal === true || currentVal > 0);
+
+        const isNowCompleted = targetHabit.isProgressType
+          ? (Number(update.value) >= target)
+          : (Boolean(update.value) === true);
+
+        if (isNowCompleted && !wasCompleted) {
+          speakText(`Fantastic! You've completed your habit: ${targetHabit.name}!`);
+        }
+      });
+
       setHabits(prev => {
         const nextHabits = prev.map(habit => {
           const update = habitUpdates.find(u => u.id === habit.id);
@@ -1518,7 +1606,10 @@ export const AppProvider = ({ children }) => {
       setTheme,
       isSoundEnabled,
       setIsSoundEnabled,
+      isVoiceEnabled,
+      setIsVoiceEnabled,
       playClickSound,
+      speakText,
       user,
       loading,
       signInWithGoogle,
